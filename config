@@ -1,0 +1,64 @@
+# Usage:
+
+# Initial setup:
+# config-init   # Creates the git repo to store the $HOME dotfiles
+
+# The usual git commands are used with the below "config" git alias. For example
+# config status
+# config add .vimrc
+# config commit -m "Add vimrc"
+# config push
+
+# Original source
+# https://news.ycombinator.com/item?id=11071754
+# and post that, blogs
+# https://www.atlassian.com/git/tutorials/dotfiles
+# https://github.com/Siilwyn/my-dotfiles/tree/master/.my-dotfiles
+#
+# The technique consists in storing a Git bare repository in a "side" folder (e.g., $HOME/.homedirgit) 
+# using a specially crafted alias so that commands are run against that repository 
+# and not the usual .git local folder, which would interfere with any other Git repositories around.
+
+GITHUB_USER=$(grep 'name ' ~/.gitconfig |cut -d= -f2 |xargs)
+GITHUB_REPO=git@github.com:$GITHUB_USER/homedirdotfiles.git
+LOCALREPO=$HOME/.homedirgit
+# Make it easier to interact with the home directory git repo
+alias config='/usr/bin/git --git-dir=$LOCALREPO --work-tree=$HOME'   
+
+# Only need this on the very first time.  Here for posterity.
+# Locally, call config-onetime-init
+# Then go create the github repository 
+config-onetime-init()
+{
+    git init --bare $HOME/.homedirgit   # Bare repo because we want the data to be in $HOME 
+    # Make sure to hide files in $HOME that aren't being tracked 
+    # to stop git whinging about all these untracked files
+    config config --local status.showUntrackedFiles no
+    config remote add origin $GITHUB_REPO
+
+    # Avoid any weird recursion problems
+    echo "$LOCALREPO" >> .gitignore
+
+    echo Remember to go to github and create $GITHUB_REPO
+}
+
+config-replicate()
+{
+    # Avoid any weird recursion problems
+    echo "$LOCALREPO" >> .gitignore
+
+    #
+    config clone --bare "$GITHUB_REPO" "$LOCALREPO"
+    BACKUP=.config-backup
+    mkdir -p $BACKUP
+    config checkout
+    if [[ $? = 0 ]]; then
+      echo "Checked out config.";
+      else
+        echo "Backing up pre-existing dot files to $BACKUP";
+        config checkout 2>&1 | egrep "\s+\." | awk {'print $1'} | xargs -I{} mv {} ${BACKUP}/{}
+    fi;
+    config checkout
+    config config --local status.showUntrackedFiles no
+}
+
