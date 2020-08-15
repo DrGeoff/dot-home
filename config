@@ -22,11 +22,11 @@
 # using a specially crafted alias so that commands are run against that repository 
 # and not the usual .git local folder, which would interfere with any other Git repositories around.
 
-GITHUB_USER=$(grep 'name ' ~/.gitconfig |cut -d= -f2 |xargs)
-GITHUB_REPO=git@github.com:$GITHUB_USER/homedirdotfiles.git
-LOCALREPO=$HOME/.homedirgit
+GITHUB_USER=$(grep 'name ' $HOME/.gitconfig |cut -d= -f2 |xargs)
+GITHUB_REPO="git@github.com:$GITHUB_USER/homedirdotfiles.git"
+LOCALREPO="$HOME/.homedirgit"
 # Make it easier to interact with the home directory git repo
-alias config='/usr/bin/git --git-dir=$LOCALREPO --work-tree=$HOME'   
+alias config="/usr/bin/git --git-dir=$LOCALREPO --work-tree=$HOME"
 
 # Only need this on the very first time.  Here for posterity.
 # Locally, call config-onetime-init
@@ -37,30 +37,36 @@ config-onetime-init()
     # Make sure to hide files in $HOME that aren't being tracked 
     # to stop git whinging about all these untracked files
     config config --local status.showUntrackedFiles no
-    config remote add origin $GITHUB_REPO
+    cmd="config remote add origin $GITHUB_REPO"
+    echo Setting up remote repo with "$cmd"
+    eval "$cmd"
 
     # Avoid any weird recursion problems
-    echo "$LOCALREPO" >> .gitignore
+    echo "$LOCALREPO" >> $HOME/.gitignore
 
     echo Remember to go to github and create $GITHUB_REPO
+    echo And on the first push use
+    echo config push -u origin master
 }
 
 config-replicate()
 {
     # Avoid any weird recursion problems
-    echo "$LOCALREPO" >> .gitignore
+    echo "$LOCALREPO" >> $HOME/.gitignore
 
-    #
+    # CLone the github homedirdotfiles repository
     config clone --bare "$GITHUB_REPO" "$LOCALREPO"
+
+    # Checkout the dot files and backup any conflicts
     BACKUP=.config-backup
     mkdir -p $BACKUP
     config checkout
     if [[ $? = 0 ]]; then
-      echo "Checked out config.";
-      else
+        echo "Checked out config.";
+    else
         echo "Backing up pre-existing dot files to $BACKUP";
         config checkout 2>&1 | egrep "\s+\." | awk {'print $1'} | xargs -I{} mv {} ${BACKUP}/{}
-    fi;
+    fi
     config checkout
     config config --local status.showUntrackedFiles no
 }
