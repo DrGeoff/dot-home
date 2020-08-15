@@ -1,7 +1,10 @@
 # Usage:
 
 # Initial setup:
-# config-init   # Creates the git repo to store the $HOME dotfiles
+# config-onetime-init   # Creates the git repo to store the $HOME dotfiles
+
+# Replicate home directory dot files to another machine:
+# config-replicate
 
 # The usual git commands are used with the below "config" git alias. For example
 # config status
