@@ -24,9 +24,9 @@
 
 GITHUB_USER=$(grep 'name ' $HOME/.gitconfig |cut -d= -f2 |xargs)
 GITHUB_REPO="git@github.com:$GITHUB_USER/homedirdotfiles.git"
-LOCALREPO="$HOME/.homedirgit"
+LOCAL_REPO="$HOME/.homedirgit"
 # Make it easier to interact with the home directory git repo
-alias config="/usr/bin/git --git-dir=$LOCALREPO --work-tree=$HOME"
+alias config="/usr/bin/git --git-dir=$LOCAL_REPO --work-tree=$HOME"
 
 # Only need this on the very first time.  Here for posterity.
 # Locally, call config-onetime-init
@@ -37,12 +37,12 @@ config-onetime-init()
     # Make sure to hide files in $HOME that aren't being tracked 
     # to stop git whinging about all these untracked files
     config config --local status.showUntrackedFiles no
-    cmd="config remote add origin $GITHUB_REPO"
+    local cmd="config remote add origin $GITHUB_REPO"
     echo Setting up remote repo with "$cmd"
     eval "$cmd"
 
     # Avoid any weird recursion problems
-    echo "$LOCALREPO" >> $HOME/.gitignore
+    echo "$LOCAL_REPO" >> $HOME/.gitignore
 
     echo Remember to go to github and create $GITHUB_REPO
     echo And on the first push use
@@ -52,13 +52,13 @@ config-onetime-init()
 config-replicate()
 {
     # Avoid any weird recursion problems
-    echo "$LOCALREPO" >> $HOME/.gitignore
+    echo "$LOCAL_REPO" >> $HOME/.gitignore
 
-    # CLone the github homedirdotfiles repository
-    config clone --bare "$GITHUB_REPO" "$LOCALREPO"
+    # Clone the github homedirdotfiles repository
+    git clone --bare "$GITHUB_REPO" "$LOCAL_REPO"
 
     # Checkout the dot files and backup any conflicts
-    BACKUP=.config-backup
+    local BACKUP=.config-backup
     mkdir -p $BACKUP
     config checkout
     if [[ $? = 0 ]]; then
